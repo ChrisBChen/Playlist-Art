@@ -1,0 +1,66 @@
+{
+  "appVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "timestamp": "2026-01-15T12:00:00.000Z",
+  "masterSeed": "workout-series-2026",
+  "N": 4,
+  "variationMode": "colors",
+  "themeId": "123456789-0",
+  "backgroundColor": "#111111",
+  "palette": {
+    "name": "Mono + Cool Accent",
+    "roles": {
+      "primary": "#76c7ff",
+      "secondary": "#b0b0b0",
+      "accent1": "#9cf3ff",
+      "accent2": "#dfe8ff",
+      "neutral": "#f2f2f2"
+    }
+  },
+  "motif": {
+    "primaryShape": "circle",
+    "secondaryShapes": ["line", "ring", "arc"],
+    "iconCategories": ["music", "general"],
+    "iconMix": 0.2,
+    "strokeIcons": true
+  },
+  "pattern": {
+    "mode": "Diagonal Drift",
+    "density": 0.55,
+    "elementScale": 0.9,
+    "rotationVariance": 0.25,
+    "opacity": 0.25,
+    "safeZone": {
+      "width": 0.55,
+      "height": 0.3,
+      "falloff": 0.6
+    },
+    "marginPct": 0.08,
+    "gridSpacing": 1,
+    "jitter": 0.25,
+    "borderPadding": 0.08
+  },
+  "typography": {
+    "headerFont": "system-ui",
+    "titleFont": "\"Helvetica Neue\"",
+    "subheaderFont": "system-ui",
+    "headerWeight": 500,
+    "titleWeight": 700,
+    "subheaderWeight": 500,
+    "headerTracking": 0.04,
+    "titleTracking": 0.02,
+    "subheaderTracking": 0.04,
+    "textColor": "#f2f2f2",
+    "maxTitleWidth": 0.8
+  },
+  "noise": {
+    "enabled": false,
+    "opacity": 0.03
+  },
+  "seriesItems": [
+    { "header": "WORKOUT", "title": "Q1 Energy", "subheader": "2026", "suffix": "Q1" },
+    { "header": "WORKOUT", "title": "Q2 Focus", "subheader": "2026", "suffix": "Q2" },
+    { "header": "WORKOUT", "title": "Q3 Tempo", "subheader": "2026", "suffix": "Q3" },
+    { "header": "WORKOUT", "title": "Q4 Recovery", "subheader": "2026", "suffix": "Q4" }
+  ]
+}
