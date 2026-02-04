@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playlist Series Cover Art Generator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Playlist Series Cover Art Generator</h1>
+        <p>Create deterministic Swiss-style cover art series for Spotify-ready exports.</p>
+      </div>
+      <div class="header-actions">
+        <button id="download-theme" class="secondary">Download Theme JSON</button>
+        <label class="file-upload">
+          Import Theme JSON
+          <input type="file" id="import-theme" accept="application/json" />
+        </label>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="controls">
+        <div class="panel">
+          <h2>Series Setup</h2>
+          <div class="field-grid">
+            <label>
+              Series Seed
+              <input id="series-seed" type="text" value="workout-series-2026" />
+            </label>
+            <label>
+              Number of Covers (1–24)
+              <input id="num-covers" type="number" min="1" max="24" value="4" />
+            </label>
+            <div class="field-inline">
+              <span>Variation Mode</span>
+              <label><input type="radio" name="variation" value="colors" checked /> Vary Colors</label>
+              <label><input type="radio" name="variation" value="shapes" /> Vary Shapes</label>
+            </div>
+            <label>
+              Background Color
+              <input id="background-color" type="color" value="#111111" />
+            </label>
+            <div class="field-inline">
+              <label><input id="export-jpg" type="checkbox" /> Enable JPG Export</label>
+              <label>Canvas Size <span class="muted">3000 × 3000</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Theme Suggestions</h2>
+          <button id="generate-themes" class="primary">Generate Theme Suggestions</button>
+          <div id="theme-suggestions" class="card-grid"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Theme Finalization</h2>
+          <div class="field-grid">
+            <label>
+              Pattern Mode
+              <select id="pattern-mode"></select>
+            </label>
+            <label>
+              Density
+              <input id="density" type="range" min="0.2" max="1" step="0.05" value="0.55" />
+            </label>
+            <label>
+              Element Scale
+              <input id="element-scale" type="range" min="0.5" max="1.6" step="0.05" value="0.9" />
+            </label>
+            <label>
+              Rotation Variance
+              <input id="rotation" type="range" min="0" max="1" step="0.05" value="0.25" />
+            </label>
+            <label>
+              Motif Opacity
+              <input id="opacity" type="range" min="0.05" max="0.6" step="0.05" value="0.25" />
+            </label>
+            <label>
+              Safe Zone Width
+              <input id="safe-width" type="range" min="0.4" max="0.7" step="0.01" value="0.55" />
+            </label>
+            <label>
+              Safe Zone Height
+              <input id="safe-height" type="range" min="0.2" max="0.5" step="0.01" value="0.3" />
+            </label>
+          </div>
+          <div id="finalization-controls" class="field-grid"></div>
+          <div class="field-inline">
+            <label><input id="strict-swiss" type="checkbox" checked /> Strict Swiss (geometry only)</label>
+            <label><input id="playful" type="checkbox" /> Playful (enable icons)</label>
+            <label><input id="stroke-icons" type="checkbox" checked /> Stroke Icons</label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Typography</h2>
+          <div class="field-grid">
+            <label>
+              Header Font
+              <select id="header-font"></select>
+            </label>
+            <label>
+              Title Font
+              <select id="title-font"></select>
+            </label>
+            <label>
+              Subheader Font
+              <select id="subheader-font"></select>
+            </label>
+            <label>
+              Text Color
+              <input id="text-color" type="color" value="#f2f2f2" />
+            </label>
+            <label>
+              Title Tracking
+              <input id="title-tracking" type="range" min="-0.05" max="0.15" step="0.005" value="0.02" />
+            </label>
+            <label>
+              Header Tracking
+              <input id="header-tracking" type="range" min="-0.02" max="0.1" step="0.005" value="0.04" />
+            </label>
+            <label>
+              Subheader Tracking
+              <input id="subheader-tracking" type="range" min="-0.02" max="0.1" step="0.005" value="0.04" />
+            </label>
+            <label>
+              Max Title Width %
+              <input id="title-width" type="range" min="0.6" max="0.9" step="0.02" value="0.8" />
+            </label>
+          </div>
+          <p id="title-warning" class="warning hidden">Title is very long, consider shortening.</p>
+        </div>
+
+        <div class="panel">
+          <h2>Text & Export</h2>
+          <div class="field-inline">
+            <button id="export-all-png" class="secondary">Export All PNG</button>
+            <button id="export-all-jpg" class="secondary">Export All JPG</button>
+          </div>
+          <div id="series-list" class="series-list"></div>
+        </div>
+
+        <div id="dev-panel" class="panel hidden">
+          <h2>Determinism Check (Dev)</h2>
+          <button id="determinism-check" class="secondary">Run Determinism Check</button>
+          <p id="determinism-result" class="muted"></p>
+        </div>
+      </section>
+
+      <section class="preview">
+        <div class="preview-card">
+          <div class="preview-header">
+            <div>
+              <h2>Live Preview</h2>
+              <p id="preview-label" class="muted">Cover 1</p>
+            </div>
+            <button id="export-current" class="primary">Export Current PNG</button>
+          </div>
+          <canvas id="preview-canvas" width="1000" height="1000"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>Built for GitHub Pages. Deterministic Swiss minimal cover series generator.</p>
+    </footer>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
