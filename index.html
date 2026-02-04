@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playlist Series Cover Art Generator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>Playlist Series Cover Art Generator</h1>
+      <p>Swiss-inspired, deterministic cover series builder for Spotify-ready artwork.</p>
+    </div>
+    <div class="header-actions">
+      <button id="downloadTheme">Download Theme JSON</button>
+      <label class="file-upload">
+        Import Theme JSON
+        <input type="file" id="importTheme" accept="application/json" />
+      </label>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="controls-panel">
+      <div class="panel-section">
+        <h2>Series Setup</h2>
+        <label>
+          Series Seed
+          <input type="text" id="seriesSeed" value="workout-series-2026" />
+        </label>
+        <label>
+          Number of Covers
+          <input type="number" id="coverCount" min="1" max="24" value="4" />
+        </label>
+        <div class="radio-group">
+          <span>Variation Mode</span>
+          <label><input type="radio" name="variationMode" value="colors" checked /> Vary Colors</label>
+          <label><input type="radio" name="variationMode" value="shapes" /> Vary Shapes</label>
+        </div>
+        <label>
+          Background Color
+          <input type="color" id="backgroundColor" value="#111111" />
+        </label>
+        <div class="toggle-group">
+          <label><input type="checkbox" id="exportJpg" /> Enable JPG Export</label>
+        </div>
+        <div class="hint">Export size: 3000 × 3000</div>
+      </div>
+
+      <div class="panel-section">
+        <h2>Theme Suggestions</h2>
+        <button id="generateSuggestions">Generate Theme Suggestions</button>
+        <div id="suggestions" class="suggestions-grid"></div>
+      </div>
+
+      <div class="panel-section" id="finalization">
+        <h2>Theme Finalization</h2>
+        <div class="finalization-grid">
+          <label>
+            Pattern Mode
+            <select id="patternMode"></select>
+          </label>
+          <label>
+            Density
+            <input type="range" id="density" min="0.2" max="1" step="0.05" value="0.6" />
+          </label>
+          <label>
+            Shape Scale
+            <input type="range" id="shapeScale" min="0.4" max="1.2" step="0.05" value="0.7" />
+          </label>
+          <label>
+            Rotation Variance
+            <input type="range" id="rotationVariance" min="0" max="1" step="0.05" value="0.2" />
+          </label>
+          <label>
+            Motif Opacity
+            <input type="range" id="motifOpacity" min="0.05" max="0.6" step="0.05" value="0.25" />
+          </label>
+        </div>
+        <div class="finalization-grid" id="motifControls"></div>
+        <div class="finalization-grid" id="paletteControls"></div>
+        <div class="finalization-grid">
+          <label>
+            Icon Mix
+            <input type="range" id="iconMix" min="0" max="1" step="0.05" value="0.25" />
+          </label>
+          <label>
+            Stroke Icons
+            <input type="checkbox" id="strokeIcons" checked />
+          </label>
+          <label>
+            Strict Swiss
+            <input type="checkbox" id="strictSwiss" />
+          </label>
+        </div>
+        <div class="category-toggles">
+          <span>Icon Categories</span>
+          <label><input type="checkbox" value="music" checked /> Music</label>
+          <label><input type="checkbox" value="fitness" checked /> Fitness</label>
+          <label><input type="checkbox" value="general" checked /> General</label>
+          <label><input type="checkbox" value="arrows" checked /> Arrows</label>
+          <label><input type="checkbox" value="abstract" checked /> Abstract</label>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h2>Text & Export</h2>
+        <div class="typography-grid">
+          <label>
+            Header Font
+            <select id="headerFont"></select>
+          </label>
+          <label>
+            Title Font
+            <select id="titleFont"></select>
+          </label>
+          <label>
+            Subheader Font
+            <select id="subheaderFont"></select>
+          </label>
+          <label>
+            Text Color
+            <input type="color" id="textColor" value="#F2F2F2" />
+          </label>
+        </div>
+        <div class="bulk-actions">
+          <button id="exportAllPng">Export All PNG</button>
+          <button id="exportAllJpg">Export All JPG</button>
+        </div>
+        <div id="seriesList" class="series-list"></div>
+      </div>
+
+      <div class="panel-section" id="devPanel" hidden>
+        <h2>Determinism Check</h2>
+        <button id="runDeterminism">Run Determinism Check</button>
+        <div id="determinismResult" class="hint"></div>
+      </div>
+    </section>
+
+    <section class="preview-panel">
+      <canvas id="previewCanvas" width="1000" height="1000"></canvas>
+      <div class="preview-meta">
+        <span id="previewTitle">Preview</span>
+        <div class="preview-actions">
+          <button id="exportSinglePng">Export PNG</button>
+          <button id="exportSingleJpg">Export JPG</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
