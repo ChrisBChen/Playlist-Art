@@ -21,7 +21,7 @@ export function renderCover({
 
   const seed = `${masterSeed}|${theme.themeId}|${cover.index}|${cover.suffix}`;
   const layoutSeed = `${masterSeed}|${theme.themeId}|layout`;
-  const cacheKey = `${layoutSeed}|${theme.pattern.mode}|${theme.pattern.density}|${theme.pattern.scale}|${theme.pattern.rotationVariance}|${theme.pattern.safeZone.width}|${theme.pattern.safeZone.height}|${theme.pattern.safeZone.falloff}|${theme.pattern.marginPct}`;
+  const cacheKey = `${layoutSeed}|${size}|${theme.pattern.mode}|${theme.pattern.density}|${theme.pattern.scale}|${theme.pattern.rotationVariance}|${theme.pattern.safeZone.width}|${theme.pattern.safeZone.height}|${theme.pattern.safeZone.falloff}|${theme.pattern.marginPct}`;
   let layout = placementCache.get(cacheKey);
 
   if (!layout) {
