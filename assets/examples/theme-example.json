@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "appVersion": "0.1.0",
+  "timestamp": "2026-01-01T00:00:00.000Z",
+  "masterSeed": "workout-series-2026",
+  "count": 4,
+  "variationMode": "vary-colors",
+  "themeId": "theme-3402844218",
+  "backgroundColor": "#111111",
+  "palette": {
+    "name": "Mono + Neon Accent",
+    "roles": {
+      "primary": "#39ffb8",
+      "secondary": "#2c2c2c",
+      "accent1": "#8dfcff",
+      "accent2": "#ffffff",
+      "neutral": "#f2f2f2"
+    }
+  },
+  "motif": {
+    "primaryShape": "circle",
+    "secondaryShapes": ["square", "ring"],
+    "icons": ["music", "headphones", "equalizer", "sparkles"],
+    "iconMix": 0.25,
+    "iconCategories": {
+      "music": true,
+      "fitness": true,
+      "general": true,
+      "arrows": true,
+      "abstract": true
+    },
+    "iconFilled": false,
+    "iconStrokeWidth": 2,
+    "shapeFilled": true,
+    "strokeWidth": 2
+  },
+  "pattern": {
+    "mode": "Tiled Grid",
+    "density": 0.5,
+    "scale": 0.5,
+    "rotationVariance": 0.3,
+    "opacity": 0.25,
+    "safeZone": {"width": 0.55, "height": 0.3, "falloff": 0.25},
+    "marginPct": 0.08
+  },
+  "typography": {
+    "header": {"family": "system-ui, Helvetica Neue, Helvetica, Arial, sans-serif", "weight": 500, "tracking": 2},
+    "title": {"family": "system-ui, Helvetica Neue, Helvetica, Arial, sans-serif", "weight": 700, "tracking": 1},
+    "subheader": {"family": "system-ui, Helvetica Neue, Helvetica, Arial, sans-serif", "weight": 500, "tracking": 1.5},
+    "color": "#f2f2f2",
+    "maxTitleWidth": 0.8
+  },
+  "seriesItems": [
+    {"index": 0, "header": "Q1", "title": "Momentum", "subheader": "Training", "suffix": "Q1"},
+    {"index": 1, "header": "Q2", "title": "Velocity", "subheader": "Training", "suffix": "Q2"},
+    {"index": 2, "header": "Q3", "title": "Pulse", "subheader": "Training", "suffix": "Q3"},
+    {"index": 3, "header": "Q4", "title": "Focus", "subheader": "Training", "suffix": "Q4"}
+  ]
+}

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playlist Art Swiss Generator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Playlist Art Swiss</h1>
+        <p class="subtitle">Deterministic Swiss-style playlist cover generator.</p>
+      </div>
+      <div class="version">v<span id="app-version"></span></div>
+    </header>
+    <main>
+      <section class="panel left">
+        <div class="section">
+          <h2>1. Series Setup</h2>
+          <label>
+            Number of covers
+            <input id="series-count" type="number" min="1" max="24" value="4" />
+          </label>
+          <div class="radio-row">
+            <label><input type="radio" name="variation-mode" value="vary-colors" checked /> Vary Colors</label>
+            <label><input type="radio" name="variation-mode" value="vary-shapes" /> Vary Shapes</label>
+          </div>
+          <label>
+            Series seed
+            <input id="master-seed" type="text" value="workout-series-2026" />
+          </label>
+          <label>
+            Background color
+            <input id="background-color" type="color" value="#111111" />
+          </label>
+          <label class="checkbox">
+            <input id="export-jpg" type="checkbox" /> Enable JPG export
+          </label>
+          <label>
+            JPG Quality
+            <input id="jpg-quality" type="range" min="0.6" max="0.98" step="0.01" value="0.92" />
+          </label>
+          <div class="pill">Export size: 3000×3000</div>
+        </div>
+
+        <div class="section">
+          <h2>2. Theme Suggestions</h2>
+          <button id="generate-themes" class="primary">Generate Theme Suggestions</button>
+          <div id="theme-cards" class="theme-cards"></div>
+        </div>
+
+        <div class="section" id="motif-section">
+          <h2>3. Motif Finalization</h2>
+          <label>
+            Primary shape
+            <select id="primary-shape"></select>
+          </label>
+          <label>
+            Icon mix
+            <input id="icon-mix" type="range" min="0" max="1" step="0.05" value="0.25" />
+          </label>
+          <div class="checkbox-row">
+            <label class="checkbox"><input id="icon-filled" type="checkbox" /> Filled icons</label>
+            <label class="checkbox"><input id="shape-filled" type="checkbox" checked /> Filled shapes</label>
+          </div>
+          <div class="checkbox-row">
+            <label class="checkbox"><input id="strict-swiss" type="checkbox" checked /> Strict Swiss</label>
+            <label class="checkbox"><input id="playful" type="checkbox" /> Playful icons</label>
+          </div>
+          <div class="icon-categories" id="icon-categories"></div>
+        </div>
+
+        <div class="section hidden" id="palette-section">
+          <h2>3. Palette Finalization</h2>
+          <label>
+            Palette preset
+            <select id="palette-preset"></select>
+          </label>
+          <label>
+            Custom primary color
+            <input id="custom-primary" type="color" value="#39ffb8" />
+          </label>
+        </div>
+
+        <div class="section">
+          <h2>4. Pattern & Typography</h2>
+          <label>
+            Pattern mode
+            <select id="pattern-mode"></select>
+          </label>
+          <label>
+            Density
+            <input id="density" type="range" min="0.2" max="0.9" step="0.05" value="0.5" />
+          </label>
+          <label>
+            Shape scale
+            <input id="scale" type="range" min="0.2" max="0.9" step="0.05" value="0.5" />
+          </label>
+          <label>
+            Rotation variance
+            <input id="rotation" type="range" min="0" max="1" step="0.05" value="0.3" />
+          </label>
+          <label>
+            Motif opacity
+            <input id="opacity" type="range" min="0.05" max="0.6" step="0.05" value="0.25" />
+          </label>
+          <label>
+            Header font
+            <select id="font-header"></select>
+          </label>
+          <label>
+            Title font
+            <select id="font-title"></select>
+          </label>
+          <label>
+            Subheader font
+            <select id="font-subheader"></select>
+          </label>
+          <label>
+            Text color
+            <input id="text-color" type="color" value="#f2f2f2" />
+          </label>
+        </div>
+
+        <div class="section">
+          <h2>5. Text & Export</h2>
+          <div class="series-header">
+            <span>Selected cover: <strong id="selected-index">1 / 4</strong></span>
+            <span class="warning" id="title-warning"></span>
+          </div>
+          <div id="series-list" class="series-list"></div>
+          <div class="bulk-actions">
+            <button id="export-all-png">Export all PNG</button>
+            <button id="export-all-jpg">Export all JPG</button>
+            <button id="download-theme">Download theme JSON</button>
+            <button id="import-theme">Import theme JSON</button>
+            <input id="import-input" type="file" accept="application/json" hidden />
+          </div>
+        </div>
+
+        <div class="section hidden" id="dev-panel">
+          <h2>Dev Panel</h2>
+          <button id="determinism-check">Determinism Check</button>
+          <span id="determinism-result"></span>
+        </div>
+      </section>
+
+      <section class="panel right">
+        <div class="preview">
+          <canvas id="preview-canvas" width="1000" height="1000"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Built for GitHub Pages. Deterministic seeds ensure reproducible series.</p>
+    </footer>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
