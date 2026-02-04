@@ -1,4 +1,4 @@
-import { generatePatternLayout } from './patterns.js';
+import { generatePatternElements } from './patterns.js';
 import { drawShape } from './shapes.js';
 import { drawIcon } from './icons.js';
 import { fitText, drawTextLines } from './textFit.js';
@@ -20,66 +20,38 @@ export function renderCover({
   ctx.fillRect(0, 0, size, size);
 
   const seed = `${masterSeed}|${theme.themeId}|${cover.index}|${cover.suffix}`;
-  const layoutSeed = `${masterSeed}|${theme.themeId}|layout`;
-  const cacheKey = `${layoutSeed}|${size}|${theme.pattern.mode}|${theme.pattern.density}|${theme.pattern.scale}|${theme.pattern.rotationVariance}|${theme.pattern.safeZone.width}|${theme.pattern.safeZone.height}|${theme.pattern.safeZone.falloff}|${theme.pattern.marginPct}`;
-  let layout = placementCache.get(cacheKey);
+  const cacheKey = `${seed}|${theme.pattern.mode}|${theme.pattern.density}|${theme.pattern.scale}|${theme.pattern.rotationVariance}|${theme.pattern.opacity}`;
+  let elements = placementCache.get(cacheKey);
 
-  if (!layout) {
-    const layoutRng = makeRng(layoutSeed);
-    layout = generatePatternLayout({
-      rng: layoutRng,
+  if (!elements) {
+    const rng = makeRng(seed);
+    elements = generatePatternElements({
+      rng,
       size,
       density: theme.pattern.density,
       elementScale: theme.pattern.scale,
       rotationVariance: theme.pattern.rotationVariance,
+      opacity: theme.pattern.opacity,
       safeZone: theme.pattern.safeZone,
       marginPct: theme.pattern.marginPct,
+      palette: theme.palette,
+      motif: theme.motif,
       patternMode: theme.pattern.mode,
     });
-    placementCache.set(cacheKey, layout);
+    placementCache.set(cacheKey, elements);
   }
-
-  const shapeRng = makeRng(
-    variationMode === 'vary-colors' ? `${layoutSeed}|shape` : `${seed}|shape`
-  );
-  const colorRng = makeRng(`${seed}|color`);
-  const singleColor =
-    variationMode === 'vary-colors'
-      ? pickSingleColor(colorRng, theme.palette)
-      : theme.palette.roles.primary;
-
-  const shapes = theme.motif.secondaryShapes.length
-    ? [theme.motif.primaryShape, ...theme.motif.secondaryShapes]
-    : [theme.motif.primaryShape];
 
   ctx.save();
   ctx.globalAlpha = theme.pattern.opacity;
-  layout.forEach((element) => {
-    const choice = pickMotifChoice(shapeRng, theme.motif, shapes);
-    if (choice.kind === 'icon') {
-      drawIcon(
-        ctx,
-        choice.value,
-        element.x,
-        element.y,
-        element.size,
-        singleColor,
-        theme.motif.iconStrokeWidth,
-        theme.motif.iconFilled
-      );
+  elements.forEach((element) => {
+    ctx.save();
+    ctx.globalAlpha = element.opacity;
+    if (element.isIcon) {
+      drawIcon(ctx, element.shape, element.x, element.y, element.size, element.color, theme.motif.iconStrokeWidth, theme.motif.iconFilled);
     } else {
-      drawShape(
-        ctx,
-        choice.value,
-        element.x,
-        element.y,
-        element.size,
-        element.rotation,
-        singleColor,
-        theme.motif.strokeWidth,
-        theme.motif.shapeFilled
-      );
+      drawShape(ctx, element.shape, element.x, element.y, element.size, element.rotation, element.color, theme.motif.strokeWidth, theme.motif.shapeFilled);
     }
+    ctx.restore();
   });
   ctx.restore();
 
@@ -166,21 +138,4 @@ export function renderCover({
 
 export function clearPlacementCache() {
   placementCache.clear();
-}
-
-function pickMotifChoice(rng, motif, shapes) {
-  const hasIcons = motif.icons.length > 0;
-  const useIcon = hasIcons && rng() < motif.iconMix;
-  if (useIcon) {
-    const icon = motif.icons[Math.floor(rng() * motif.icons.length)];
-    return { kind: 'icon', value: icon };
-  }
-  const shape = shapes[Math.floor(rng() * shapes.length)];
-  return { kind: 'shape', value: shape };
-}
-
-function pickSingleColor(rng, palette) {
-  const options = [palette.roles.primary, palette.roles.accent1, palette.roles.accent2];
-  const idx = Math.floor(rng() * options.length);
-  return options[Math.min(idx, options.length - 1)];
 }

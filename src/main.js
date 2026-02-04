@@ -1,12 +1,13 @@
 import {
   createInitialState,
   buildSeriesItems,
+  defaultSuffix,
   buildThemeExport,
   applyThemeImport,
   APP_VERSION,
 } from './state.js';
 import { PALETTE_PRESETS, buildPaletteFromPrimary } from './utils/color.js';
-import { makeRng, pick, stringToSeed } from './utils/seed.js';
+import { makeRng, pick, range, stringToSeed } from './utils/seed.js';
 import { SHAPE_TYPES } from './render/shapes.js';
 import { ICON_CATEGORIES, ICONS } from './render/icons.js';
 import { PATTERN_MODES } from './render/patterns.js';
