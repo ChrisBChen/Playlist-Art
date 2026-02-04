@@ -1,0 +1,59 @@
+{
+  "appVersion": "1.0.0",
+  "schemaVersion": "1.0",
+  "timestamp": "2026-01-01T12:00:00.000Z",
+  "masterSeed": "workout-series-2026",
+  "count": 4,
+  "variationMode": "colors",
+  "themeId": "theme-0-123456",
+  "backgroundColor": "#111111",
+  "palette": {
+    "id": "palette-0",
+    "name": "Mono + Neon Accent",
+    "colors": ["#c1cedf", "#aeb9c8", "#9ab1d6", "#8cc9e4", "#f2f2f2"],
+    "roles": {
+      "primary": "#c1cedf",
+      "secondary": "#aeb9c8",
+      "accent1": "#9ab1d6",
+      "accent2": "#8cc9e4",
+      "neutral": "#f2f2f2"
+    },
+    "generated": true
+  },
+  "motif": {
+    "primaryShape": "circle",
+    "secondaryShapes": ["square", "rounded-square", "triangle", "diamond"],
+    "iconCategories": ["music", "general"],
+    "iconMix": 25,
+    "iconStyle": "stroke",
+    "strictSwiss": false
+  },
+  "pattern": {
+    "mode": "tiled",
+    "density": 60,
+    "elementScale": 16,
+    "rotationVariance": 0.2,
+    "opacity": 0.25,
+    "marginPct": 0.08,
+    "safeZoneWidthPct": 0.55,
+    "safeZoneHeightPct": 0.3,
+    "safeZoneFalloff": 0.4,
+    "borderPaddingPct": 0.12
+  },
+  "typography": {
+    "headerFont": "Helvetica Neue",
+    "titleFont": "Helvetica Neue",
+    "subheaderFont": "Helvetica Neue",
+    "headerWeight": 500,
+    "titleWeight": 600,
+    "subheaderWeight": 500,
+    "textColor": "#f2f2f2",
+    "maxTitleWidthPct": 80
+  },
+  "seriesItems": [
+    { "header": "Quarter 1", "title": "Workout Flow", "subheader": "Strength", "suffix": "Q1" },
+    { "header": "Quarter 2", "title": "Workout Flow", "subheader": "Endurance", "suffix": "Q2" },
+    { "header": "Quarter 3", "title": "Workout Flow", "subheader": "Power", "suffix": "Q3" },
+    { "header": "Quarter 4", "title": "Workout Flow", "subheader": "Recovery", "suffix": "Q4" }
+  ]
+}
