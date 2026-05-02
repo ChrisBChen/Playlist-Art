@@ -1,281 +1,339 @@
 import {
-  createInitialState,
-  buildSeriesItems,
-  defaultSuffix,
-  buildThemeExport,
-  applyThemeImport,
   APP_VERSION,
+  ART_PALETTES,
+  ART_SYSTEMS,
+  BACKGROUND_MODES,
+  INDEX_PRESETS,
+  applyThemeImport,
+  buildIndexLabel,
+  buildSeriesItemsFromText,
+  buildThemeExport,
+  createInitialState,
+  getPalette,
+  resolvePalette,
 } from './state.js';
-import { PALETTE_PRESETS, buildPaletteFromPrimary } from './utils/color.js';
-import { makeRng, pick, range, stringToSeed } from './utils/seed.js';
-import { SHAPE_TYPES } from './render/shapes.js';
-import { ICON_CATEGORIES, ICONS } from './render/icons.js';
-import { PATTERN_MODES } from './render/patterns.js';
-import { renderCover, clearPlacementCache } from './render/render.js';
+import { renderCover } from './render/render.js';
+import { createZip } from './utils/zip.js';
 
 const state = createInitialState();
 const previewSize = 1000;
-const exportSize = 3000;
+const thumbnailSize = 240;
 
 const elements = {
-  countInput: document.getElementById('series-count'),
-  variationInputs: document.querySelectorAll('input[name="variation-mode"]'),
-  backgroundInput: document.getElementById('background-color'),
-  masterSeedInput: document.getElementById('master-seed'),
-  exportJpgToggle: document.getElementById('export-jpg'),
+  appVersion: document.getElementById('app-version'),
+  coverCount: document.getElementById('cover-count'),
+  playlistInput: document.getElementById('playlist-input'),
+  applyPlaylists: document.getElementById('apply-playlists'),
+  defaultKicker: document.getElementById('default-kicker'),
+  defaultFooter: document.getElementById('default-footer'),
+  indexPreset: document.getElementById('index-preset'),
+  indexStart: document.getElementById('index-start'),
+  applySeriesDefaults: document.getElementById('apply-series-defaults'),
+  templateCards: document.getElementById('template-cards'),
+  masterSeed: document.getElementById('master-seed'),
+  paletteSelect: document.getElementById('palette-select'),
+  backgroundMode: document.getElementById('background-mode'),
+  customBackground: document.getElementById('custom-background'),
+  customInk: document.getElementById('custom-ink'),
+  customAccent: document.getElementById('custom-accent'),
+  customAccent2: document.getElementById('custom-accent2'),
+  gridDensity: document.getElementById('grid-density'),
+  typeScale: document.getElementById('type-scale'),
+  variationStrength: document.getElementById('variation-strength'),
+  exportJpg: document.getElementById('export-jpg'),
   jpgQuality: document.getElementById('jpg-quality'),
-  generateThemesBtn: document.getElementById('generate-themes'),
-  themeCards: document.getElementById('theme-cards'),
-  motifSection: document.getElementById('motif-section'),
-  paletteSection: document.getElementById('palette-section'),
-  patternMode: document.getElementById('pattern-mode'),
-  density: document.getElementById('density'),
-  scale: document.getElementById('scale'),
-  rotationVariance: document.getElementById('rotation'),
-  opacity: document.getElementById('opacity'),
-  primaryShape: document.getElementById('primary-shape'),
-  iconMix: document.getElementById('icon-mix'),
-  iconFilled: document.getElementById('icon-filled'),
-  shapeFilled: document.getElementById('shape-filled'),
-  strictSwiss: document.getElementById('strict-swiss'),
-  playful: document.getElementById('playful'),
-  iconCategories: document.getElementById('icon-categories'),
-  palettePreset: document.getElementById('palette-preset'),
-  customPrimary: document.getElementById('custom-primary'),
-  fontHeader: document.getElementById('font-header'),
-  fontTitle: document.getElementById('font-title'),
-  fontSubheader: document.getElementById('font-subheader'),
-  textColor: document.getElementById('text-color'),
-  previewCanvas: document.getElementById('preview-canvas'),
-  seriesList: document.getElementById('series-list'),
+  exportSelectedPng: document.getElementById('export-selected-png'),
   exportAllPng: document.getElementById('export-all-png'),
+  exportSelectedJpg: document.getElementById('export-selected-jpg'),
   exportAllJpg: document.getElementById('export-all-jpg'),
   downloadTheme: document.getElementById('download-theme'),
   importTheme: document.getElementById('import-theme'),
   importInput: document.getElementById('import-input'),
-  titleWarning: document.getElementById('title-warning'),
-  devPanel: document.getElementById('dev-panel'),
   determinismCheck: document.getElementById('determinism-check'),
   determinismResult: document.getElementById('determinism-result'),
-  selectedIndexLabel: document.getElementById('selected-index'),
+  previewCanvas: document.getElementById('preview-canvas'),
+  selectedIndex: document.getElementById('selected-index'),
+  previewTitle: document.getElementById('preview-title'),
+  titleWarning: document.getElementById('title-warning'),
+  seriesGallery: document.getElementById('series-gallery'),
+  seriesList: document.getElementById('series-list'),
 };
 
 const previewCtx = elements.previewCanvas.getContext('2d');
-
 elements.previewCanvas.width = previewSize;
-
 elements.previewCanvas.height = previewSize;
 
-const fontOptions = [
-  'system-ui, Helvetica Neue, Helvetica, Arial, sans-serif',
-  'Helvetica Neue, Helvetica, Arial, sans-serif',
-  'Inter, system-ui, sans-serif',
-  'SF Pro Display, system-ui, sans-serif',
-  'Segoe UI, system-ui, sans-serif',
-  'Roboto, system-ui, sans-serif',
-];
+function initialize() {
+  elements.appVersion.textContent = APP_VERSION;
+  initSelect(elements.paletteSelect, ART_PALETTES, 'id', 'name');
+  initSelect(elements.backgroundMode, BACKGROUND_MODES, 'id', 'name');
+  initSelect(elements.indexPreset, INDEX_PRESETS, 'id', 'name');
+  updateControlsFromState();
+  registerEvents();
+  renderAll();
+}
 
-function initSelectOptions(select, options) {
+function initSelect(select, options, valueKey, labelKey) {
   select.innerHTML = '';
   options.forEach((option) => {
     const el = document.createElement('option');
-    el.value = option;
-    el.textContent = option.split(',')[0];
+    el.value = option[valueKey];
+    el.textContent = option[labelKey];
     select.appendChild(el);
   });
 }
 
-initSelectOptions(elements.fontHeader, fontOptions);
-initSelectOptions(elements.fontTitle, fontOptions);
-initSelectOptions(elements.fontSubheader, fontOptions);
-
-SHAPE_TYPES.forEach((shape) => {
-  const option = document.createElement('option');
-  option.value = shape;
-  option.textContent = shape;
-  elements.primaryShape.appendChild(option);
-});
-
-PALETTE_PRESETS.forEach((palette, index) => {
-  const option = document.createElement('option');
-  option.value = index;
-  option.textContent = palette.name;
-  elements.palettePreset.appendChild(option);
-});
-
-PATTERN_MODES.forEach((mode) => {
-  const option = document.createElement('option');
-  option.value = mode;
-  option.textContent = mode;
-  elements.patternMode.appendChild(option);
-});
-
-function buildIconCategoryToggles() {
-  elements.iconCategories.innerHTML = '';
-  Object.keys(ICON_CATEGORIES).forEach((category) => {
-    const label = document.createElement('label');
-    label.className = 'checkbox';
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.value = category;
-    input.checked = state.motifControls.iconCategories[category];
-    input.addEventListener('change', () => {
-      state.motifControls.iconCategories[category] = input.checked;
-      updateThemeFromControls();
-    });
-    const span = document.createElement('span');
-    span.textContent = category;
-    label.appendChild(input);
-    label.appendChild(span);
-    elements.iconCategories.appendChild(label);
+function registerEvents() {
+  elements.applyPlaylists.addEventListener('click', () => {
+    state.batchInput = elements.playlistInput.value;
+    state.seriesItems = buildSeriesItemsFromText(state.batchInput, state.seriesItems, state.seriesDefaults);
+    state.ui.selectedIndex = Math.min(state.ui.selectedIndex, state.seriesItems.length - 1);
+    renderAll();
   });
-}
 
-function getEnabledIcons() {
-  const enabled = [];
-  Object.entries(ICON_CATEGORIES).forEach(([category, icons]) => {
-    if (state.motifControls.iconCategories[category]) {
-      icons.forEach((icon) => {
-        if (ICONS[icon]) enabled.push(icon);
-      });
+  elements.applySeriesDefaults.addEventListener('click', () => {
+    readSeriesDefaultsFromControls();
+    applySeriesDefaultsToItems();
+    renderAll();
+  });
+
+  elements.indexPreset.addEventListener('change', (event) => {
+    elements.indexStart.value = defaultIndexStart(event.target.value);
+  });
+
+  elements.masterSeed.addEventListener('input', (event) => {
+    state.masterSeed = event.target.value;
+    renderCanvasSurfaces();
+  });
+
+  elements.paletteSelect.addEventListener('change', (event) => {
+    state.artSystem.paletteId = event.target.value;
+    if (event.target.value !== 'custom') {
+      state.artSystem.customColors = { ...getPalette(event.target.value).colors };
     }
+    updateColorInputs();
+    renderCanvasSurfaces();
   });
-  return enabled;
+
+  elements.backgroundMode.addEventListener('change', (event) => {
+    state.artSystem.backgroundMode = event.target.value;
+    renderCanvasSurfaces();
+  });
+
+  [
+    ['customBackground', 'background'],
+    ['customInk', 'ink'],
+    ['customAccent', 'accent'],
+    ['customAccent2', 'accent2'],
+  ].forEach(([elementKey, colorKey]) => {
+    elements[elementKey].addEventListener('input', (event) => {
+      state.artSystem.paletteId = 'custom';
+      state.artSystem.customColors[colorKey] = event.target.value;
+      elements.paletteSelect.value = 'custom';
+      renderCanvasSurfaces();
+    });
+  });
+
+  elements.gridDensity.addEventListener('input', (event) => {
+    state.artSystem.gridDensity = Number.parseInt(event.target.value, 10);
+    renderCanvasSurfaces();
+  });
+
+  elements.typeScale.addEventListener('input', (event) => {
+    state.artSystem.typeScale = Number.parseFloat(event.target.value);
+    renderCanvasSurfaces();
+  });
+
+  elements.variationStrength.addEventListener('input', (event) => {
+    state.artSystem.variationStrength = Number.parseFloat(event.target.value);
+    renderCanvasSurfaces();
+  });
+
+  elements.exportJpg.addEventListener('change', (event) => {
+    state.exportSettings.jpgEnabled = event.target.checked;
+    updateExportButtons();
+  });
+
+  elements.jpgQuality.addEventListener('input', (event) => {
+    state.exportSettings.jpgQuality = Number.parseFloat(event.target.value) || 0.92;
+  });
+
+  elements.exportSelectedPng.addEventListener('click', () => exportSelected('png'));
+  elements.exportAllPng.addEventListener('click', () => exportAll('png'));
+  elements.exportSelectedJpg.addEventListener('click', () => exportSelected('jpg'));
+  elements.exportAllJpg.addEventListener('click', () => exportAll('jpg'));
+
+  elements.downloadTheme.addEventListener('click', () => {
+    const data = buildThemeExport(state);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    downloadBlob(blob, 'swiss-playlist-theme.json');
+  });
+
+  elements.importTheme.addEventListener('click', () => elements.importInput.click());
+  elements.importInput.addEventListener('change', handleThemeImport);
+  elements.determinismCheck.addEventListener('click', runDeterminismCheck);
 }
 
-function setVariationMode(value) {
-  state.seriesSetup.variationMode = value;
-  elements.motifSection.classList.toggle('hidden', value === 'vary-shapes');
-  elements.paletteSection.classList.toggle('hidden', value === 'vary-colors');
+function updateControlsFromState() {
+  elements.playlistInput.value = state.batchInput;
+  elements.defaultKicker.value = state.seriesDefaults.kicker;
+  elements.defaultFooter.value = state.seriesDefaults.footer;
+  elements.indexPreset.value = state.seriesDefaults.indexPreset;
+  elements.indexStart.value = state.seriesDefaults.indexStart;
+  elements.masterSeed.value = state.masterSeed;
+  elements.paletteSelect.value = state.artSystem.paletteId;
+  elements.backgroundMode.value = state.artSystem.backgroundMode;
+  elements.gridDensity.value = state.artSystem.gridDensity;
+  elements.typeScale.value = state.artSystem.typeScale;
+  elements.variationStrength.value = state.artSystem.variationStrength;
+  elements.exportJpg.checked = state.exportSettings.jpgEnabled;
+  elements.jpgQuality.value = state.exportSettings.jpgQuality;
+  updateColorInputs();
+  updateExportButtons();
 }
 
-function handleSeriesCountChange(value) {
-  const count = Math.max(1, Math.min(24, Number.parseInt(value, 10)) || 1);
-  state.seriesSetup.count = count;
-  state.seriesItems = buildSeriesItems(count);
-  state.ui.selectedIndex = 0;
+function updateColorInputs() {
+  const colors = resolvePalette(state.artSystem).colors;
+  elements.customBackground.value = colors.background;
+  elements.customInk.value = colors.ink;
+  elements.customAccent.value = colors.accent;
+  elements.customAccent2.value = colors.accent2;
+}
+
+function updateExportButtons() {
+  elements.exportSelectedJpg.disabled = !state.exportSettings.jpgEnabled;
+  elements.exportAllJpg.disabled = !state.exportSettings.jpgEnabled;
+}
+
+function renderAll() {
+  updateCountLabel();
+  renderTemplateCards();
+  renderPreview();
+  renderGallery();
   renderSeriesList();
+}
+
+function renderCanvasSurfaces() {
+  renderTemplateCards();
   renderPreview();
+  renderGallery();
 }
 
-function generateThemeSuggestions() {
-  const { masterSeed, variationMode, count } = state.seriesSetup;
-  const suggestions = [];
-  for (let i = 0; i < 5; i += 1) {
-    const seed = `${masterSeed}|themeCandidate|${i}|${variationMode}|${count}`;
-    const rng = makeRng(seed);
-    const palette = pick(rng, PALETTE_PRESETS);
-    const motifSet = buildMotifSet(rng);
-    const patternMode = pick(rng, PATTERN_MODES);
-    const theme = {
-      themeId: `theme-${stringToSeed(seed)}`,
-      backgroundColor: state.seriesSetup.backgroundColor,
-      palette: variationMode === 'vary-colors' ? palette : PALETTE_PRESETS[state.paletteControls.presetIndex],
-      motif: variationMode === 'vary-shapes' ? motifSet : buildMotifSet(rng),
-      pattern: {
-        ...state.patternControls,
-        mode: patternMode,
-      },
-    };
-    suggestions.push(theme);
-  }
-  state.themeSuggestions = suggestions;
-  renderThemeSuggestions();
+function updateCountLabel() {
+  const count = state.seriesItems.length;
+  elements.coverCount.textContent = `${count} ${count === 1 ? 'cover' : 'covers'}`;
 }
 
-function buildMotifSet(rng) {
-  const strictShapes = ['circle', 'square', 'rectangle', 'triangle', 'diamond', 'ring'];
-  const playfulShapes = SHAPE_TYPES;
-  const shapes = state.motifControls.strictSwiss ? strictShapes : playfulShapes;
-  const primaryShape = pick(rng, shapes);
-  const secondaryShapes = [pick(rng, shapes), pick(rng, shapes)].filter((shape) => shape !== primaryShape);
-  const icons = state.motifControls.playful ? getEnabledIcons() : [];
-  return {
-    primaryShape,
-    secondaryShapes: secondaryShapes.length ? secondaryShapes : [primaryShape],
-    icons,
-    iconMix: state.motifControls.iconMix,
-    iconCategories: { ...state.motifControls.iconCategories },
-    iconFilled: state.motifControls.iconFilled,
-    iconStrokeWidth: state.motifControls.iconStrokeWidth,
-    shapeFilled: state.motifControls.shapeFilled,
-    strokeWidth: state.motifControls.strokeWidth,
+function readSeriesDefaultsFromControls() {
+  state.seriesDefaults = {
+    kicker: elements.defaultKicker.value.trim() || 'PLAYLIST',
+    footer: elements.defaultFooter.value.trim() || 'SWISS SERIES',
+    indexPreset: elements.indexPreset.value,
+    indexStart: elements.indexStart.value.trim() || '01',
   };
 }
 
-function updateThemeFromControls() {
-  if (!state.selectedTheme) return;
-  const palette = state.seriesSetup.variationMode === 'vary-colors'
-    ? state.selectedTheme.palette
-    : PALETTE_PRESETS[state.paletteControls.presetIndex];
-  const motif = {
-    ...state.selectedTheme.motif,
-    primaryShape: state.motifControls.primaryShape,
-    secondaryShapes: state.motifControls.secondaryShapes,
-    icons: getEnabledIcons(),
-    iconMix: state.motifControls.iconMix,
-    iconCategories: { ...state.motifControls.iconCategories },
-    iconFilled: state.motifControls.iconFilled,
-    iconStrokeWidth: state.motifControls.iconStrokeWidth,
-    shapeFilled: state.motifControls.shapeFilled,
-    strokeWidth: state.motifControls.strokeWidth,
-  };
-
-  state.selectedTheme = {
-    ...state.selectedTheme,
-    backgroundColor: state.seriesSetup.backgroundColor,
-    palette,
-    motif,
-    pattern: { ...state.patternControls },
-  };
-  clearPlacementCache();
-  renderPreview();
+function defaultIndexStart(preset) {
+  if (preset === 'monthly') return 'JAN';
+  if (preset === 'quarterly') return 'Q1';
+  if (preset === 'yearly') return `${new Date().getFullYear()}`;
+  return '01';
 }
 
-function renderThemeSuggestions() {
-  elements.themeCards.innerHTML = '';
-  state.themeSuggestions.forEach((theme) => {
+function applySeriesDefaultsToItems() {
+  state.seriesItems.forEach((item, index) => {
+    const indexLabel = buildIndexLabel(index, state.seriesDefaults);
+    item.kicker = state.seriesDefaults.kicker;
+    item.footer = state.seriesDefaults.footer;
+    item.indexLabel = indexLabel;
+    item.variantSeed = indexLabel;
+  });
+}
+
+function renderTemplateCards() {
+  elements.templateCards.innerHTML = '';
+  ART_SYSTEMS.forEach((system) => {
     const card = document.createElement('button');
-    card.className = 'theme-card';
+    card.type = 'button';
+    card.className = `template-card ${state.artSystem.templateId === system.id ? 'active' : ''}`;
+    card.title = system.description;
+
     const canvas = document.createElement('canvas');
-    canvas.width = 160;
-    canvas.height = 160;
-    const ctx = canvas.getContext('2d');
+    canvas.width = thumbnailSize;
+    canvas.height = thumbnailSize;
     renderCover({
-      ctx,
-      size: 160,
-      cover: { index: 0, suffix: 'preview', header: '', title: '', subheader: '' },
-      theme,
+      ctx: canvas.getContext('2d'),
+      size: thumbnailSize,
+      cover: {
+        index: 0,
+        title: system.name,
+        kicker: 'SYSTEM',
+        footer: 'PLAYLIST ART',
+        variantSeed: system.id,
+        indexLabel: '01',
+      },
+      artSystem: {
+        ...state.artSystem,
+        templateId: system.id,
+      },
+      palette: resolvePalette(state.artSystem),
       typography: state.typography,
-      masterSeed: state.seriesSetup.masterSeed,
-      variationMode: state.seriesSetup.variationMode,
+      masterSeed: state.masterSeed,
     });
-    const paletteSummary = document.createElement('div');
-    paletteSummary.className = 'palette-summary';
-    Object.values(theme.palette.roles).forEach((color) => {
-      const swatch = document.createElement('span');
-      swatch.style.backgroundColor = color;
-      paletteSummary.appendChild(swatch);
-    });
+
     const label = document.createElement('span');
-    label.textContent = theme.pattern.mode;
-    card.appendChild(canvas);
-    card.appendChild(paletteSummary);
-    card.appendChild(label);
+    label.textContent = system.name;
+    card.append(canvas, label);
     card.addEventListener('click', () => {
-      state.selectedTheme = theme;
-      state.motifControls.primaryShape = theme.motif.primaryShape;
-      state.motifControls.secondaryShapes = theme.motif.secondaryShapes;
-      state.motifControls.iconMix = theme.motif.iconMix;
-      state.motifControls.iconFilled = theme.motif.iconFilled;
-      state.motifControls.shapeFilled = theme.motif.shapeFilled;
-      state.motifControls.iconCategories = { ...theme.motif.iconCategories };
-      state.patternControls = { ...theme.pattern };
-      renderSeriesList();
-      updateInputsFromState();
-      renderPreview();
+      state.artSystem.templateId = system.id;
+      renderCanvasSurfaces();
     });
-    elements.themeCards.appendChild(card);
+    elements.templateCards.appendChild(card);
+  });
+}
+
+function renderPreview() {
+  const cover = getSelectedCover();
+  const result = renderCover({
+    ctx: previewCtx,
+    size: previewSize,
+    cover,
+    artSystem: state.artSystem,
+    palette: resolvePalette(state.artSystem),
+    typography: state.typography,
+    masterSeed: state.masterSeed,
+  });
+
+  elements.selectedIndex.textContent = cover.indexLabel;
+  elements.previewTitle.textContent = cover.title;
+  elements.titleWarning.textContent = result.titleFit?.tooSmall ? 'Long title' : '';
+}
+
+function renderGallery() {
+  elements.seriesGallery.innerHTML = '';
+  state.seriesItems.forEach((cover, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `thumbnail-button ${state.ui.selectedIndex === index ? 'active' : ''}`;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = thumbnailSize;
+    canvas.height = thumbnailSize;
+    renderCover({
+      ctx: canvas.getContext('2d'),
+      size: thumbnailSize,
+      cover,
+      artSystem: state.artSystem,
+      palette: resolvePalette(state.artSystem),
+      typography: state.typography,
+      masterSeed: state.masterSeed,
+    });
+
+    const label = document.createElement('span');
+    label.textContent = `${cover.indexLabel} ${cover.title}`;
+    button.append(canvas, label);
+    button.addEventListener('click', () => selectCover(index));
+    elements.seriesGallery.appendChild(button);
   });
 }
 
@@ -284,123 +342,120 @@ function renderSeriesList() {
   state.seriesItems.forEach((item, index) => {
     const row = document.createElement('div');
     row.className = `series-item ${state.ui.selectedIndex === index ? 'active' : ''}`;
-    row.addEventListener('click', () => {
-      state.ui.selectedIndex = index;
-      renderSeriesList();
-      renderPreview();
-    });
+    row.addEventListener('click', () => selectCover(index));
 
-    const headerInput = document.createElement('input');
-    headerInput.value = item.header;
-    headerInput.placeholder = 'Header';
-    headerInput.addEventListener('input', (event) => {
-      item.header = event.target.value;
-      renderPreview();
-    });
+    row.append(
+      buildRowInput(item, 'indexLabel', 'No.'),
+      buildRowInput(item, 'kicker', 'Kicker'),
+      buildRowInput(item, 'title', 'Playlist title'),
+      buildRowInput(item, 'footer', 'Footer'),
+      buildRowInput(item, 'variantSeed', 'Seed'),
+    );
 
-    const titleInput = document.createElement('input');
-    titleInput.value = item.title;
-    titleInput.placeholder = 'Playlist name';
-    titleInput.addEventListener('input', (event) => {
-      item.title = event.target.value;
-      renderPreview();
-    });
-
-    const subInput = document.createElement('input');
-    subInput.value = item.subheader;
-    subInput.placeholder = 'Subheader';
-    subInput.addEventListener('input', (event) => {
-      item.subheader = event.target.value;
-      renderPreview();
-    });
-
-    const suffixInput = document.createElement('input');
-    suffixInput.value = item.suffix;
-    suffixInput.placeholder = 'Seed suffix';
-    suffixInput.addEventListener('input', (event) => {
-      item.suffix = event.target.value;
-      clearPlacementCache();
-      renderPreview();
-    });
-
-    const exportPng = document.createElement('button');
-    exportPng.textContent = 'Export PNG';
-    exportPng.addEventListener('click', (event) => {
-      event.stopPropagation();
-      exportCover(item, 'png');
-    });
-
-    const exportJpg = document.createElement('button');
-    exportJpg.textContent = 'Export JPG';
-    exportJpg.disabled = !state.seriesSetup.exportJpg;
-    exportJpg.addEventListener('click', (event) => {
-      event.stopPropagation();
-      exportCover(item, 'jpg');
-    });
-
-    row.appendChild(buildLabel(`Cover ${index + 1}`));
-    row.appendChild(headerInput);
-    row.appendChild(titleInput);
-    row.appendChild(subInput);
-    row.appendChild(suffixInput);
-    row.appendChild(exportPng);
-    row.appendChild(exportJpg);
     elements.seriesList.appendChild(row);
   });
-  elements.selectedIndexLabel.textContent = `${state.ui.selectedIndex + 1} / ${state.seriesSetup.count}`;
 }
 
-function buildLabel(text) {
-  const label = document.createElement('span');
-  label.className = 'series-label';
-  label.textContent = text;
-  return label;
-}
-
-function renderPreview() {
-  if (!state.selectedTheme) return;
-  const cover = state.seriesItems[state.ui.selectedIndex];
-  const result = renderCover({
-    ctx: previewCtx,
-    size: previewSize,
-    cover,
-    theme: state.selectedTheme,
-    typography: state.typography,
-    masterSeed: state.seriesSetup.masterSeed,
-    variationMode: state.seriesSetup.variationMode,
+function buildRowInput(item, key, placeholder) {
+  const input = document.createElement('input');
+  input.value = item[key];
+  input.placeholder = placeholder;
+  input.addEventListener('click', (event) => event.stopPropagation());
+  input.addEventListener('input', (event) => {
+    item[key] = event.target.value;
+    syncBatchInputFromItems();
+    renderPreview();
+    renderGallery();
   });
-  elements.titleWarning.textContent = result.titleFit.tooSmall ? 'Title is very long, consider shortening.' : '';
+  return input;
 }
 
-function exportCover(cover, format) {
-  if (!state.selectedTheme) return;
-  const canvas = document.createElement('canvas');
-  canvas.width = exportSize;
-  canvas.height = exportSize;
-  const ctx = canvas.getContext('2d');
-  renderCover({
-    ctx,
-    size: exportSize,
-    cover,
-    theme: state.selectedTheme,
-    typography: state.typography,
-    masterSeed: state.seriesSetup.masterSeed,
-    variationMode: state.seriesSetup.variationMode,
-  });
+function selectCover(index) {
+  state.ui.selectedIndex = index;
+  renderPreview();
+  renderGallery();
+  renderSeriesList();
+}
 
-  const filename = buildFilename(cover, format);
-  if (format === 'png') {
-    canvas.toBlob((blob) => downloadBlob(blob, filename), 'image/png');
-  } else {
-    canvas.toBlob((blob) => downloadBlob(blob, filename), 'image/jpeg', state.seriesSetup.jpgQuality);
+function syncBatchInputFromItems() {
+  state.batchInput = state.seriesItems.map((item) => item.title).join('\n');
+  elements.playlistInput.value = state.batchInput;
+}
+
+function getSelectedCover() {
+  return state.seriesItems[state.ui.selectedIndex] || state.seriesItems[0];
+}
+
+async function exportSelected(format) {
+  if (format === 'jpg' && !state.exportSettings.jpgEnabled) return;
+  const cover = getSelectedCover();
+  const blob = await renderCoverBlob(cover, format);
+  downloadBlob(blob, buildFilename(cover, format));
+}
+
+async function exportAll(format) {
+  if (format === 'jpg' && !state.exportSettings.jpgEnabled) return;
+  setExportBusy(true);
+  try {
+    const files = [];
+    for (const cover of state.seriesItems) {
+      files.push({
+        name: buildFilename(cover, format),
+        blob: await renderCoverBlob(cover, format),
+      });
+    }
+    const zip = await createZip(files);
+    downloadBlob(zip, `swiss-playlist-covers-${format}.zip`);
+  } finally {
+    setExportBusy(false);
   }
 }
 
+function setExportBusy(isBusy) {
+  elements.exportAllPng.disabled = isBusy;
+  elements.exportSelectedPng.disabled = isBusy;
+  elements.exportAllJpg.disabled = isBusy || !state.exportSettings.jpgEnabled;
+  elements.exportSelectedJpg.disabled = isBusy || !state.exportSettings.jpgEnabled;
+}
+
+async function renderCoverBlob(cover, format) {
+  const canvas = document.createElement('canvas');
+  canvas.width = state.exportSettings.size;
+  canvas.height = state.exportSettings.size;
+  renderCover({
+    ctx: canvas.getContext('2d'),
+    size: state.exportSettings.size,
+    cover,
+    artSystem: state.artSystem,
+    palette: resolvePalette(state.artSystem),
+    typography: state.typography,
+    masterSeed: state.masterSeed,
+  });
+
+  const type = format === 'jpg' ? 'image/jpeg' : 'image/png';
+  const quality = format === 'jpg' ? state.exportSettings.jpgQuality : undefined;
+  return canvasToBlob(canvas, type, quality);
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, quality);
+  });
+}
+
 function buildFilename(cover, format) {
-  const parts = [cover.index + 1, cover.header, cover.title, cover.subheader]
-    .filter(Boolean)
-    .map((part) => part.replace(/[^a-z0-9-_]+/gi, '_').slice(0, 40));
-  return `${parts.join('_')}.${format}`;
+  const title = sanitizeFilename(cover.title || `playlist-${cover.index + 1}`);
+  const index = sanitizeFilename(cover.indexLabel || `${cover.index + 1}`.padStart(2, '0'));
+  return `${index}-${title}.${format}`;
+}
+
+function sanitizeFilename(value) {
+  return String(value)
+    .trim()
+    .replace(/[^a-z0-9-_]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 72)
+    .toLowerCase() || 'playlist';
 }
 
 function downloadBlob(blob, filename) {
@@ -413,238 +468,55 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
-function updateInputsFromState() {
-  elements.countInput.value = state.seriesSetup.count;
-  elements.backgroundInput.value = state.seriesSetup.backgroundColor;
-  elements.masterSeedInput.value = state.seriesSetup.masterSeed;
-  elements.exportJpgToggle.checked = state.seriesSetup.exportJpg;
-  elements.jpgQuality.value = state.seriesSetup.jpgQuality;
-  elements.patternMode.value = state.patternControls.mode;
-  elements.density.value = state.patternControls.density;
-  elements.scale.value = state.patternControls.scale;
-  elements.rotationVariance.value = state.patternControls.rotationVariance;
-  elements.opacity.value = state.patternControls.opacity;
-  elements.primaryShape.value = state.motifControls.primaryShape;
-  elements.iconMix.value = state.motifControls.iconMix;
-  elements.iconFilled.checked = state.motifControls.iconFilled;
-  elements.shapeFilled.checked = state.motifControls.shapeFilled;
-  elements.strictSwiss.checked = state.motifControls.strictSwiss;
-  elements.playful.checked = state.motifControls.playful;
-  elements.palettePreset.value = state.paletteControls.presetIndex;
-  elements.customPrimary.value = state.paletteControls.customPrimary;
-  elements.fontHeader.value = state.typography.header.family;
-  elements.fontTitle.value = state.typography.title.family;
-  elements.fontSubheader.value = state.typography.subheader.family;
-  elements.textColor.value = state.typography.color;
+function handleThemeImport(event) {
+  const [file] = event.target.files;
+  if (!file) return;
 
-  elements.variationInputs.forEach((input) => {
-    input.checked = input.value === state.seriesSetup.variationMode;
-  });
-
-  buildIconCategoryToggles();
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const nextState = applyThemeImport(state, data);
+      Object.assign(state, nextState);
+      updateControlsFromState();
+      renderAll();
+    } catch (error) {
+      alert('Invalid theme JSON.');
+    } finally {
+      elements.importInput.value = '';
+    }
+  };
+  reader.readAsText(file);
 }
 
-function registerEvents() {
-  elements.countInput.addEventListener('change', (event) => handleSeriesCountChange(event.target.value));
-  elements.backgroundInput.addEventListener('input', (event) => {
-    state.seriesSetup.backgroundColor = event.target.value;
-    if (state.selectedTheme) {
-      state.selectedTheme.backgroundColor = event.target.value;
-      renderPreview();
-    }
-  });
-  elements.masterSeedInput.addEventListener('input', (event) => {
-    state.seriesSetup.masterSeed = event.target.value;
-    clearPlacementCache();
-    renderPreview();
-  });
-  elements.exportJpgToggle.addEventListener('change', (event) => {
-    state.seriesSetup.exportJpg = event.target.checked;
-    renderSeriesList();
-  });
-  elements.jpgQuality.addEventListener('input', (event) => {
-    state.seriesSetup.jpgQuality = Number.parseFloat(event.target.value) || 0.92;
-  });
-  elements.generateThemesBtn.addEventListener('click', generateThemeSuggestions);
-
-  elements.variationInputs.forEach((input) => {
-    input.addEventListener('change', (event) => {
-      setVariationMode(event.target.value);
-    });
-  });
-
-  elements.patternMode.addEventListener('change', (event) => {
-    state.patternControls.mode = event.target.value;
-    updateThemeFromControls();
-  });
-  elements.density.addEventListener('input', (event) => {
-    state.patternControls.density = Number.parseFloat(event.target.value);
-    updateThemeFromControls();
-  });
-  elements.scale.addEventListener('input', (event) => {
-    state.patternControls.scale = Number.parseFloat(event.target.value);
-    updateThemeFromControls();
-  });
-  elements.rotationVariance.addEventListener('input', (event) => {
-    state.patternControls.rotationVariance = Number.parseFloat(event.target.value);
-    updateThemeFromControls();
-  });
-  elements.opacity.addEventListener('input', (event) => {
-    state.patternControls.opacity = Number.parseFloat(event.target.value);
-    updateThemeFromControls();
-  });
-
-  elements.primaryShape.addEventListener('change', (event) => {
-    state.motifControls.primaryShape = event.target.value;
-    state.motifControls.secondaryShapes = [event.target.value];
-    updateThemeFromControls();
-  });
-  elements.iconMix.addEventListener('input', (event) => {
-    state.motifControls.iconMix = Number.parseFloat(event.target.value);
-    updateThemeFromControls();
-  });
-  elements.iconFilled.addEventListener('change', (event) => {
-    state.motifControls.iconFilled = event.target.checked;
-    updateThemeFromControls();
-  });
-  elements.shapeFilled.addEventListener('change', (event) => {
-    state.motifControls.shapeFilled = event.target.checked;
-    updateThemeFromControls();
-  });
-  elements.strictSwiss.addEventListener('change', (event) => {
-    state.motifControls.strictSwiss = event.target.checked;
-  });
-  elements.playful.addEventListener('change', (event) => {
-    state.motifControls.playful = event.target.checked;
-  });
-
-  elements.palettePreset.addEventListener('change', (event) => {
-    state.paletteControls.presetIndex = Number.parseInt(event.target.value, 10);
-    if (state.selectedTheme) {
-      state.selectedTheme.palette = PALETTE_PRESETS[state.paletteControls.presetIndex];
-      renderPreview();
-    }
-  });
-  elements.customPrimary.addEventListener('input', (event) => {
-    state.paletteControls.customPrimary = event.target.value;
-    const customPalette = buildPaletteFromPrimary(event.target.value);
-    if (state.selectedTheme && state.seriesSetup.variationMode === 'vary-shapes') {
-      state.selectedTheme.palette = customPalette;
-      renderPreview();
-    }
-  });
-
-  elements.fontHeader.addEventListener('change', (event) => {
-    state.typography.header.family = event.target.value;
-    renderPreview();
-  });
-  elements.fontTitle.addEventListener('change', (event) => {
-    state.typography.title.family = event.target.value;
-    renderPreview();
-  });
-  elements.fontSubheader.addEventListener('change', (event) => {
-    state.typography.subheader.family = event.target.value;
-    renderPreview();
-  });
-  elements.textColor.addEventListener('input', (event) => {
-    state.typography.color = event.target.value;
-    renderPreview();
-  });
-
-  elements.exportAllPng.addEventListener('click', () => {
-    state.seriesItems.forEach((cover) => exportCover(cover, 'png'));
-  });
-  elements.exportAllJpg.addEventListener('click', () => {
-    if (!state.seriesSetup.exportJpg) return;
-    state.seriesItems.forEach((cover) => exportCover(cover, 'jpg'));
-  });
-
-  elements.downloadTheme.addEventListener('click', () => {
-    const exportData = buildThemeExport(state);
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    downloadBlob(blob, 'playlist-theme.json');
-  });
-
-  elements.importTheme.addEventListener('click', () => elements.importInput.click());
-  elements.importInput.addEventListener('change', (event) => {
-    const [file] = event.target.files;
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        if (!data.schemaVersion) throw new Error('Missing schema version');
-        const nextState = applyThemeImport(state, data);
-        Object.assign(state, nextState);
-        state.seriesItems = data.seriesItems || buildSeriesItems(state.seriesSetup.count);
-        state.ui.selectedIndex = 0;
-        renderSeriesList();
-        updateInputsFromState();
-        renderPreview();
-      } catch (error) {
-        alert('Invalid theme JSON.');
-      }
-    };
-    reader.readAsText(file);
-  });
-
-  if (location.hostname === 'localhost') {
-    state.ui.showDevTools = true;
-    elements.devPanel.classList.remove('hidden');
-    elements.determinismCheck.addEventListener('click', () => {
-      const cover = state.seriesItems[0];
-      const canvasA = document.createElement('canvas');
-      const canvasB = document.createElement('canvas');
-      canvasA.width = 300;
-      canvasA.height = 300;
-      canvasB.width = 300;
-      canvasB.height = 300;
-      const ctxA = canvasA.getContext('2d');
-      const ctxB = canvasB.getContext('2d');
-      renderCover({
-        ctx: ctxA,
-        size: 300,
-        cover,
-        theme: state.selectedTheme,
-        typography: state.typography,
-        masterSeed: state.seriesSetup.masterSeed,
-        variationMode: state.seriesSetup.variationMode,
-      });
-      renderCover({
-        ctx: ctxB,
-        size: 300,
-        cover,
-        theme: state.selectedTheme,
-        typography: state.typography,
-        masterSeed: state.seriesSetup.masterSeed,
-        variationMode: state.seriesSetup.variationMode,
-      });
-      const hashA = hashImage(ctxA);
-      const hashB = hashImage(ctxB);
-      elements.determinismResult.textContent = hashA === hashB ? 'Match ✓' : 'Mismatch!';
-    });
-  }
+function runDeterminismCheck() {
+  const cover = getSelectedCover();
+  const hashA = renderHash(cover);
+  const hashB = renderHash(cover);
+  elements.determinismResult.textContent = hashA === hashB ? 'Match' : 'Mismatch';
 }
 
-function hashImage(ctx) {
-  const data = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height).data;
+function renderHash(cover) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 360;
+  canvas.height = 360;
+  const ctx = canvas.getContext('2d');
+  renderCover({
+    ctx,
+    size: 360,
+    cover,
+    artSystem: state.artSystem,
+    palette: resolvePalette(state.artSystem),
+    typography: state.typography,
+    masterSeed: state.masterSeed,
+  });
+
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
   let hash = 0;
   for (let i = 0; i < data.length; i += 4) {
-    hash = (hash + data[i] + data[i + 1] + data[i + 2]) % 1000000007;
+    hash = (hash + data[i] * 3 + data[i + 1] * 5 + data[i + 2] * 7 + data[i + 3]) % 1000000007;
   }
   return hash;
-}
-
-function initialize() {
-  setVariationMode(state.seriesSetup.variationMode);
-  buildIconCategoryToggles();
-  renderSeriesList();
-  updateInputsFromState();
-  generateThemeSuggestions();
-  state.selectedTheme = state.themeSuggestions[0];
-  renderPreview();
-  registerEvents();
-  document.getElementById('app-version').textContent = APP_VERSION;
 }
 
 initialize();

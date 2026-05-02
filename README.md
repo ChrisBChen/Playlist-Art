@@ -1,64 +1,73 @@
-# Playlist Art Swiss
+# Swiss Playlist Studio
 
-A static, deterministic Swiss-style playlist cover generator built for GitHub Pages. It generates cohesive series artwork with seeded randomness, exports 3000×3000 PNGs (optional JPG), and supports theme JSON export/import for reproducibility.
+A static, deterministic playlist cover generator for making a whole set of themed playlist artwork at once. The app is designed around restrained Swiss poster systems: fixed grids, asymmetric typography, limited palettes, and controlled variation from cover to cover.
 
 ## Features
 
-- Deterministic seeded generation (no `Math.random` in rendering).
-- Swiss-style grid layouts with motif safe zones and strict margins.
-- Theme suggestions (4–5) based on variation mode.
-- Per-cover text editing with automatic fitting.
-- Export individual or bulk PNG/JPG.
-- Theme JSON export/import for perfect regeneration.
+- Batch playlist input with editable per-cover rows.
+- Series defaults for applying shared kicker, footer, and numeric/monthly/quarterly/yearly labels.
+- Four curated art systems: Type Block, Modular Bars, Circle Study, and Index Field.
+- Deterministic rendering from a master seed plus per-cover variant seeds.
+- Swiss-inspired palettes with custom color overrides.
+- Large selected preview plus full-series thumbnail gallery.
+- Individual PNG/JPG export at 3000x3000.
+- Bulk PNG/JPG export as a single ZIP file.
+- Theme JSON export/import with backward-compatible v1 theme import.
 
-## Quick start (local)
+## Quick Start
 
 ```bash
-python -m http.server 5173
+python3 -m http.server 5173
 ```
 
-Then visit `http://localhost:5173`.
+Then visit:
 
-## Usage
+```text
+http://localhost:5173
+```
 
-1. **Series Setup**: choose the number of covers, variation mode, background color, and seed.
-2. **Theme Suggestions**: click “Generate Theme Suggestions” and pick one.
-3. **Theme Finalization**: refine motif or palette based on the variation mode.
-4. **Pattern & Typography**: adjust grid mode, density, scale, rotation, and fonts.
-5. **Text & Export**: edit header/title/subheader, export PNG/JPG, download/import theme JSON.
+## Workflow
+
+1. Paste playlist names into the batch field and update the series.
+2. Choose one of the four art systems.
+3. Adjust the seed, palette, grid density, type scale, and variation strength.
+4. Apply shared kicker/footer/numbering defaults, then edit any individual row as needed.
+5. Export one cover or the whole set as a ZIP.
 
 ## Theme JSON
 
-The exported theme JSON includes:
+Theme exports use `schemaVersion: 2`. The important fields are:
 
-- App and schema version
-- Series seed and count
-- Variation mode and theme id
-- Background color, palette roles
-- Motif definition (shapes/icons)
-- Pattern parameters (safe zones, spacing)
-- Typography settings
-- Per-cover text and suffixes
+- `masterSeed`
+- `seriesDefaults`
+- `artSystem.templateId`
+- `artSystem.gridDensity`
+- `artSystem.paletteId`
+- `artSystem.customColors`
+- `artSystem.typeScale`
+- `artSystem.variationStrength`
+- `artSystem.backgroundMode`
+- `typography`
+- `exportSettings`
+- `seriesItems`
 
-Example theme JSON is available at:
+Each `seriesItems` entry uses:
 
-```
+- `title`
+- `kicker`
+- `footer`
+- `variantSeed`
+- `indexLabel`
+
+An example is available at:
+
+```text
 /assets/examples/theme-example.json
 ```
 
-## GitHub Pages deployment
+## Deployment
 
-Because the app is fully static, it can be served directly from the repository root. If using GitHub Pages:
-
-1. Commit all files.
-2. Enable GitHub Pages for the repository (branch root).
-3. Visit the published URL.
-
-## Tech notes
-
-- Rendering is done via Canvas 2D.
-- Preview renders at 1000×1000 for responsiveness, exports at 3000×3000.
-- All determinism derives from the master seed + theme id + index + suffix.
+The app is plain static HTML, CSS, and JavaScript. It can be hosted from a GitHub Pages repository root without a build step.
 
 ## License
 

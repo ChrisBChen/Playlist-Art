@@ -4,11 +4,36 @@ function measureLine(ctx, text, tracking) {
   return metrics.width + extra;
 }
 
+function splitLongWord(ctx, word, maxWidth, tracking) {
+  const chunks = [];
+  let current = '';
+  word.split('').forEach((char) => {
+    const test = `${current}${char}`;
+    if (current && measureLine(ctx, test, tracking) > maxWidth) {
+      chunks.push(current);
+      current = char;
+    } else {
+      current = test;
+    }
+  });
+  if (current) chunks.push(current);
+  return chunks;
+}
+
 function wrapText(ctx, text, maxWidth, tracking) {
   const words = text.split(' ');
   const lines = [];
   let current = '';
   words.forEach((word) => {
+    if (measureLine(ctx, word, tracking) > maxWidth) {
+      if (current) {
+        lines.push(current);
+        current = '';
+      }
+      lines.push(...splitLongWord(ctx, word, maxWidth, tracking));
+      return;
+    }
+
     const test = current ? `${current} ${word}` : word;
     if (measureLine(ctx, test, tracking) <= maxWidth || !current) {
       current = test;
@@ -34,9 +59,11 @@ export function fitText({
 }) {
   let fontSize = baseSize;
   let lines = [];
+  const normalized = String(text || '').trim();
+
   while (fontSize >= minSize) {
     ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-    lines = wrapText(ctx, text, maxWidth, tracking);
+    lines = wrapText(ctx, normalized, maxWidth, tracking);
     if (lines.length <= maxLines) {
       const longest = Math.max(...lines.map((line) => measureLine(ctx, line, tracking)));
       if (longest <= maxWidth) break;
@@ -63,7 +90,10 @@ export function drawTextLines({
   lines.forEach((line, index) => {
     const offsetY = y + index * lineHeight;
     if (tracking) {
-      let currentX = x - (measureLine(ctx, line, tracking) / 2);
+      const width = measureLine(ctx, line, tracking);
+      let currentX = x;
+      if (align === 'center') currentX = x - width / 2;
+      if (align === 'right') currentX = x - width;
       line.split('').forEach((char) => {
         ctx.fillText(char, currentX, offsetY);
         currentX += ctx.measureText(char).width + tracking;
